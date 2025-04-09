@@ -1,0 +1,33 @@
+name: Crawl
+
+on:
+  workflow_dispatch: {}
+
+env:
+  BROWSERTRIX_IMAGE: 'webrecorder/browsertrix-crawler:1.5.11'
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get Browsertrix-Crawler
+        run: |
+          docker pull '${{ env.BROWSERTRIX_IMAGE }}'
+      
+      - id: setup-collection
+        run: |
+          mkdir crawls
+          timestamp="$(date +'%Y%m%d%H%M%S')"
+          collection="test-crawl-${timestamp}"
+          echo "collection=${collection}" >> "$GITHUB_OUTPUT"
+      
+      - name: Crawl
+        run: |
+          ./crawl.sh ./test.crawl.yaml '${{ steps.setup-collection.outputs.collection }}'
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          path: 'crawls/collections/${{ steps.setup-collection.outputs.collection }}'
+          retention-days: 7
